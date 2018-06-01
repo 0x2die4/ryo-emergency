@@ -680,7 +680,7 @@ namespace cryptonote
      *
      * @return false if any enforced checkpoint type fails to load, otherwise true
      */
-    bool update_checkpoints(const std::string& file_path, bool check_dns);
+    bool update_checkpoints(const std::string& file_path, bool check_dns = CHECK_DNS_CHECKPOINTS);
 
 
     // user options, must be called before calling init()
@@ -1257,7 +1257,7 @@ namespace cryptonote
      * @brief loads block hashes from compiled-in data set
      *
      * A (possibly empty) set of block hashes can be compiled into the
-     * sumokoin daemon binary.  This function loads those hashes into
+     * ryo daemon binary.  This function loads those hashes into
      * a useful state.
      */
     void load_compiled_in_block_hashes();

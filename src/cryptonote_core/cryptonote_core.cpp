@@ -101,7 +101,7 @@ namespace cryptonote
     bool res = true;
     if (time(NULL) - m_last_dns_checkpoints_update >= 3600)
     {
-      res = m_blockchain_storage.update_checkpoints(m_checkpoints_path, true);
+      res = m_blockchain_storage.update_checkpoints(m_checkpoints_path);
       m_last_dns_checkpoints_update = time(NULL);
       m_last_json_checkpoints_update = time(NULL);
     }
@@ -282,7 +282,7 @@ namespace cryptonote
       {
         LOG_PRINT_RED_L0("Found old-style blockchain.bin in " << old_files.string());
         LOG_PRINT_RED_L0("Monero now uses a new format. You can either remove blockchain.bin to start syncing");
-        LOG_PRINT_RED_L0("the blockchain anew, or use sumo-blockchain-export and sumo-blockchain-import to");
+        LOG_PRINT_RED_L0("the blockchain anew, or use ryo-blockchain-export and ryo-blockchain-import to");
         LOG_PRINT_RED_L0("convert your existing blockchain.bin to the new format. See README.md for instructions.");
         return false;
       }
