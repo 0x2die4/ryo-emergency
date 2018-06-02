@@ -66,12 +66,18 @@ static const uint64_t valid_decomposed_outputs[] = {
   (uint64_t)10000000000000000000ull
 };
 
+#define TX_FORK_ID_STR "ryo-currency"
+
 namespace cryptonote
 {
   //---------------------------------------------------------------
   void get_transaction_prefix_hash(const transaction_prefix& tx, crypto::hash& h)
   {
     std::ostringstream s;
+
+    if(tx.version >= 3)
+      s << TX_FORK_ID_STR;
+
     binary_archive<true> a(s);
     ::serialization::serialize(a, const_cast<transaction_prefix&>(tx));
     crypto::cn_fast_hash(s.str().data(), s.str().size(), h);
@@ -565,7 +571,7 @@ namespace cryptonote
     return encrypt_payment_id(payment_id, public_key, secret_key);
   }
   //---------------------------------------------------------------
-  bool construct_tx_and_get_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, const std::vector<tx_source_entry>& sources, const std::vector<tx_destination_entry>& destinations, const cryptonote::account_public_address& change_addr, std::vector<uint8_t> extra, transaction& tx, uint64_t unlock_time, crypto::secret_key &tx_key, std::vector<crypto::secret_key> &additional_tx_keys, bool rct)
+  bool construct_tx_and_get_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, const std::vector<tx_source_entry>& sources, const std::vector<tx_destination_entry>& destinations, const cryptonote::account_public_address& change_addr, std::vector<uint8_t> extra, transaction& tx, uint64_t unlock_time, crypto::secret_key &tx_key, std::vector<crypto::secret_key> &additional_tx_keys, bool rct, bool use_v3_tx)
   {
     if (destinations.empty())
     {
@@ -577,7 +583,7 @@ namespace cryptonote
     tx.set_null();
     amount_keys.clear();
 
-    tx.version = CURRENT_TRANSACTION_VERSION;
+    tx.version = use_v3_tx ? 3 : 2;
     tx.unlock_time = unlock_time;
 
     tx.extra = extra;
@@ -925,18 +931,9 @@ namespace cryptonote
 
     CHECK_AND_ASSERT_MES(tx.vout.size() == outSk.size(), false, "outSk size does not match vout");
 
-    LOG_PRINT2("construct_tx.log", "transaction_created: " << get_transaction_hash(tx) << ENDL << obj_to_json_str(tx) << ENDL, LOG_LEVEL_3);
+    LOG_PRINT_L0("transaction_created: " << get_transaction_hash(tx) << ENDL << obj_to_json_str(tx) << ENDL);
 
     return true;
-  }
-  //---------------------------------------------------------------
-  bool construct_tx(const account_keys& sender_account_keys, const std::vector<tx_source_entry>& sources, const std::vector<tx_destination_entry>& destinations, std::vector<uint8_t> extra, transaction& tx, uint64_t unlock_time)
-  {
-    std::unordered_map<crypto::public_key, cryptonote::subaddress_index> subaddresses;
-    subaddresses[sender_account_keys.m_account_address.m_spend_public_key] = { 0, 0 };
-    crypto::secret_key tx_key;
-    std::vector<crypto::secret_key> additional_tx_keys;
-    return construct_tx_and_get_tx_key(sender_account_keys, subaddresses, sources, destinations, destinations.back().addr, extra, tx, unlock_time, tx_key, additional_tx_keys);
   }
   //---------------------------------------------------------------
   bool get_inputs_money_amount(const transaction& tx, uint64_t& money)

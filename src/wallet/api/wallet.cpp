@@ -602,10 +602,10 @@ uint64_t WalletImpl::approximateBlockChainHeight() const
 {
     return m_wallet->get_approximate_blockchain_height();
 }
-uint64_t WalletImpl::daemonBlockChainHeight() const
+uint64_t WalletImpl::daemonBlockChainTargetHeight() const
 {
     std::string err;
-    uint64_t result = m_wallet->get_daemon_blockchain_height(err);
+    uint64_t result = m_wallet->get_daemon_blockchain_target_height(err);
     if (!err.empty()) {
         LOG_ERROR(__FUNCTION__ << ": " << err);
         result = 0;
@@ -619,10 +619,19 @@ uint64_t WalletImpl::daemonBlockChainHeight() const
     return result;
 }
 
-uint64_t WalletImpl::daemonBlockChainTargetHeight() const
+uint64_t WalletImpl::daemonBlockChainHeight() const
 {
     std::string err;
-    uint64_t result = m_wallet->get_daemon_blockchain_target_height(err);
+    uint64_t result;
+    try
+    {
+        result = m_wallet->get_daemon_blockchain_height();
+    }
+    catch (const std::exception &e)
+    {
+        err = e.what();
+    }
+
     if (!err.empty()) {
         LOG_ERROR(__FUNCTION__ << ": " << err);
         result = 0;

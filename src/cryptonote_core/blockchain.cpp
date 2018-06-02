@@ -1066,7 +1066,7 @@ bool Blockchain::create_block_template(block& b, const account_public_address& m
   size_t txs_size;
   uint64_t fee;
   uint8_t hf_version = m_hardfork->get_current_version();
-  if (!m_tx_pool.fill_block_template(b, median_size, already_generated_coins, txs_size, fee, height))
+  if (!m_tx_pool.fill_block_template(b, median_size, already_generated_coins, txs_size, fee, height, m_testnet))
   {
     return false;
   }
@@ -2230,7 +2230,7 @@ bool Blockchain::have_tx_keyimges_as_spent(const transaction &tx) const
 bool Blockchain::expand_transaction_2(transaction &tx, const crypto::hash &tx_prefix_hash, const std::vector<std::vector<rct::ctkey>> &pubkeys)
 {
   PERF_TIMER(expand_transaction_2);
-  CHECK_AND_ASSERT_MES(tx.version == 2, false, "Transaction version is not 2");
+  CHECK_AND_ASSERT_MES(tx.version == 2 || tx.version == 3, false, "Transaction version is not 2 or 3");
 
   rct::rctSig &rv = tx.rct_signatures;
 
@@ -2374,14 +2374,14 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
   
 
   // min/max tx version based on HF, and we accept v1 txes if having a non mixable
-  const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
+  const size_t max_tx_version = 3;
   if (tx.version > max_tx_version)
   {
     LOG_PRINT_L1("transaction version " << (unsigned)tx.version << " is higher than max accepted version " << max_tx_version);
     tvc.m_verifivation_failed = true;
     return false;
   }
-  const size_t min_tx_version = MIN_TRANSACTION_VERSION;
+  const size_t min_tx_version = 2;
   if (tx.version < min_tx_version)
   {
     LOG_PRINT_L1("transaction version " << (unsigned)tx.version << " is lower than min accepted version " << min_tx_version);
@@ -3063,6 +3063,19 @@ leave:
   TIME_MEASURE_FINISH(t3);
 
 // XXX old code adds miner tx here
+  uint64_t height = m_db->height();
+  bool allow_v3_tx;
+  if(m_testnet)
+    allow_v3_tx = height > 122670;
+  else
+    allow_v3_tx = height > 137500;
+
+  if(bl.miner_tx.version == 3 && !allow_v3_tx)
+  {
+    LOG_PRINT_L1("V3 Miner tx seen at height: " << height);
+    bvc.m_verifivation_failed = true;
+    goto leave;
+  }
 
   int tx_index = 0;
   // Iterate over the block's transaction hashes, grabbing each
@@ -3123,6 +3136,14 @@ leave:
     t_dblspnd += dd;
     TIME_MEASURE_START(cc);
 
+    if(tx.version == 3 && !allow_v3_tx)
+    {
+      LOG_PRINT_L1("V3 tx seen at height: " << height);
+      bvc.m_verifivation_failed = true;
+      return_tx_to_pool(txs);
+      goto leave;
+    }
+
 #if defined(PER_BLOCK_CHECKPOINT)
     if (!fast_check)
 #endif
@@ -3168,7 +3189,6 @@ leave:
 
   TIME_MEASURE_START(vmt);
   uint64_t base_reward = 0;
-  uint64_t height = m_db->height();
   uint64_t cal_height = height - height % COIN_EMISSION_HEIGHT_INTERVAL;
   uint64_t cal_generated_coins = cal_height ? m_db->get_block_already_generated_coins(cal_height - 1) : 0;
   if (!validate_miner_transaction(bl, cumulative_block_size, fee_summary, base_reward, cal_generated_coins, bvc.m_partial_block_reward, m_hardfork->get_current_version()))

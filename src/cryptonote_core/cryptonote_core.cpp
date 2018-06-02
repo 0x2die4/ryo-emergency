@@ -464,6 +464,7 @@ namespace cryptonote
 
     return false;
   }
+
   //-----------------------------------------------------------------------------------------------
   bool core::handle_incoming_tx(const blobdata& tx_blob, tx_verification_context& tvc, bool keeped_by_block, bool relayed)
   {
@@ -492,10 +493,11 @@ namespace cryptonote
     //std::cout << "!"<< tx.vin.size() << std::endl;
 
     //uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-    const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
+    const size_t max_tx_version = 3;
     if (tx.version == 0 || tx.version > max_tx_version)
     {
       // v2 is the latest one we know
+      LOG_PRINT_L1("WRONG TRANSACTION VERSION");
       tvc.m_verifivation_failed = true;
       return false;
     }
