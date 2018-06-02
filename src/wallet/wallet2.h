@@ -618,7 +618,7 @@ namespace tools
     std::string get_wallet_file() const;
     std::string get_keys_file() const;
     std::string get_daemon_address() const;
-    uint64_t get_daemon_blockchain_height(std::string& err);
+    uint64_t get_daemon_blockchain_height();
     uint64_t get_daemon_blockchain_target_height(std::string& err);
    /*!
     * \brief Calculates the approximate blockchain height from current date/time.
@@ -1231,9 +1231,16 @@ namespace tools
       dust += d.amount;
     }
 
+    bool use_replay_prot = m_testnet || get_daemon_blockchain_height() >= 137510;
+    if(use_replay_prot)
+       LOG_PRINT_L0("Generating using replay protection!");
+    else
+       LOG_PRINT_L0("Generating NOT USING replay protection! (this is normal pre-fork)");
+
     crypto::secret_key tx_key;
     std::vector<crypto::secret_key> additional_tx_keys;
-    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys);
+    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys, true, use_replay_prot);
+
     THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sources, splitted_dsts, unlock_time, m_testnet);
     THROW_WALLET_EXCEPTION_IF(upper_transaction_size_limit <= get_object_blobsize(tx), error::tx_too_big, tx, upper_transaction_size_limit);
 

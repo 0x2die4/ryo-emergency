@@ -599,10 +599,16 @@ namespace cryptonote
   }
   //---------------------------------------------------------------------------------
   //TODO: investigate whether boolean return is appropriate
-  bool tx_memory_pool::fill_block_template(block &bl, size_t median_size, uint64_t already_generated_coins, size_t &total_size, uint64_t &fee, uint64_t height)
+  bool tx_memory_pool::fill_block_template(block &bl, size_t median_size, uint64_t already_generated_coins, size_t &total_size, uint64_t &fee, uint64_t height, bool testnet)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
 
+    bool allow_v3_tx;
+    if(testnet)
+      allow_v3_tx = height > 122670;
+    else
+      allow_v3_tx = height > 137501;
+  
     uint64_t best_coinbase = 0;
     total_size = 0;
     fee = 0;
@@ -660,6 +666,13 @@ namespace cryptonote
         sorted_it++;
         continue;
       }
+
+      if (tx_it->second.tx.version == 3 && !allow_v3_tx)
+      {
+        LOG_PRINT_L2(" V3 tx at " << height);
+        sorted_it++;
+        continue;
+	  }
 
       bl.tx_hashes.push_back(tx_it->first);
       total_size += tx_it->second.blob_size;

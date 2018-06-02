@@ -3449,7 +3449,14 @@ bool wallet2::sign_tx(const std::string &unsigned_filename, const std::string &s
     tools::wallet2::pending_tx &ptx = signed_txes.ptx.back();
     crypto::secret_key tx_key;
     std::vector<crypto::secret_key> additional_tx_keys;
-    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sd.sources, sd.splitted_dsts, sd.change_dts.addr, sd.extra, ptx.tx, sd.unlock_time, tx_key, additional_tx_keys, sd.use_rct);
+
+    bool use_replay_prot = m_testnet || get_daemon_blockchain_height() >= 137510;
+    if(use_replay_prot)
+       LOG_PRINT_L0("Generating using replay protection!");
+    else
+       LOG_PRINT_L0("Generating NOT USING replay protection! (this is normal pre-fork)");
+
+    bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sd.sources, sd.splitted_dsts, sd.change_dts.addr, sd.extra, ptx.tx, sd.unlock_time, tx_key, additional_tx_keys, sd.use_rct, use_replay_prot);
 	THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sd.sources, sd.splitted_dsts, sd.unlock_time, m_testnet);
 	// we don't test tx size, because we don't know the current limit, due to not having a blockchain,
     // and it's a bit pointless to fail there anyway, since it'd be a (good) guess only. We sign anyway,
@@ -4097,10 +4104,16 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
   }
   splitted_dsts.push_back(change_dts);
 
+  bool use_replay_prot = m_testnet || get_daemon_blockchain_height() >= 137510;
+  if(use_replay_prot)
+    LOG_PRINT_L0("Generating using replay protection!");
+  else
+    LOG_PRINT_L0("Generating NOT USING replay protection! (this is normal pre-fork)");
+
   crypto::secret_key tx_key;
   std::vector<crypto::secret_key> additional_tx_keys;
   LOG_PRINT_L2("constructing tx");
-  bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys, true);
+  bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys, true, use_replay_prot);
   LOG_PRINT_L2("constructed tx, r=" << r);
   THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sources, dsts, unlock_time, m_testnet);
   THROW_WALLET_EXCEPTION_IF(upper_transaction_size_limit <= get_object_blobsize(tx), error::tx_too_big, tx, upper_transaction_size_limit);
@@ -4961,35 +4974,16 @@ std::string wallet2::get_daemon_address() const
   return m_daemon_address;
 }
 
-uint64_t wallet2::get_daemon_blockchain_height(string &err)
+uint64_t wallet2::get_daemon_blockchain_height()
 {
-  // XXX: DRY violation. copy-pasted from simplewallet.cpp:get_daemon_blockchain_height()
-  //      consider to move it from simplewallet to wallet2 ?
   COMMAND_RPC_GET_HEIGHT::request req;
   COMMAND_RPC_GET_HEIGHT::response res = boost::value_initialized<COMMAND_RPC_GET_HEIGHT::response>();
   m_daemon_rpc_mutex.lock();
   bool ok = net_utils::invoke_http_json_remote_command2(m_daemon_address + "/getheight", req, res, m_http_client);
   m_daemon_rpc_mutex.unlock();
-  // XXX: DRY violation. copy-pasted from simplewallet.cpp:interpret_rpc_response()
-  if (ok)
-  {
-    if (res.status == CORE_RPC_STATUS_BUSY)
-    {
-      err = "daemon is busy. Please try again later.";
-    }
-    else if (res.status != CORE_RPC_STATUS_OK)
-    {
-      err = res.status;
-    }
-    else // success, cleaning up error message
-    {
-      err = "";
-    }
-  }
-  else
-  {
-    err = "possibly lost connection to daemon";
-  }
+  
+  THROW_WALLET_EXCEPTION_IF(!ok, error::daemon_busy, "Daemon RPC failed!");
+  THROW_WALLET_EXCEPTION_IF(res.height == 0,  error::daemon_busy, "Daemon RPC failed!");
   return res.height;
 }
 
@@ -5003,6 +4997,7 @@ uint64_t wallet2::get_daemon_blockchain_target_height(string &err)
   req_t.method = "get_info";
   bool ok = net_utils::invoke_http_json_remote_command2(m_daemon_address + "/json_rpc", req_t, resp_t, m_http_client);
   m_daemon_rpc_mutex.unlock();
+
   if (ok)
   {
     if (resp_t.result.status == CORE_RPC_STATUS_BUSY)
