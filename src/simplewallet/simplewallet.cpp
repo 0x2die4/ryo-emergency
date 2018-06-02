@@ -76,8 +76,8 @@ typedef cryptonote::simple_wallet sw;
 
 #define EXTENDED_LOGS_FILE "wallet_details.log"
 
-#define KEY_IMAGE_EXPORT_FILE_MAGIC "Ryo key image export\002"
-#define OUTPUT_EXPORT_FILE_MAGIC "Ryo output export\002"
+#define KEY_IMAGE_EXPORT_FILE_MAGIC "Sumokoin key image export\002"
+#define OUTPUT_EXPORT_FILE_MAGIC "Sumokoin output export\002"
 
 #define LOCK_IDLE_SCOPE() \
   bool auto_refresh_enabled = m_auto_refresh_enabled.load(std::memory_order_relaxed); \
