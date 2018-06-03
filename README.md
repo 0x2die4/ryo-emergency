@@ -13,7 +13,7 @@ Portions Copyright (c) 2012-2013, The Cryptonote developers
 - Web: [ryo-currency.com](https://ryo-currency.com)
 - Mail: [contact@ryo-currency.com](mailto:contact@ryo-currency.com)
 
-Please note that code is developed on the [dev branch](https://github.com/ryo-currency/ryo-emergency/tree/dev), if you want to check out the latest updates, before they are merged on main branch, please refer there. Master branch will always point to a version that we consider stable, so you can download the code by simply typing `git clone https://github.com/sumoprojects/ryo.git`
+Please note that code is developed on the [dev branch](https://github.com/ryo-currency/ryo-emergency/tree/dev), if you want to check out the latest updates, before they are merged on main branch, please refer there. Master branch will always point to a version that we consider stable, so you can download the code by simply typing `git clone https://github.com/ryo-currency/ryo-emergency.git`
 
 ## Introduction
 
@@ -28,12 +28,12 @@ About 10% (~8.8 million) was premined to reserve for future development, i.e. **
 
 The pre-mined coins have been frozen/burned in commit [c3a3cb6](https://github.com/ryo-currency/ryo-emergency/commit/c3a3cb620488e88be7c52e017072261a3063b872)/ [blockchain_db/blockchain_db.cpp#L250-L258](https://github.com/ryo-currency/ryo-emergency/blob/c3a3cb620488e88be7c52e017072261a3063b872/src/blockchain_db/blockchain_db.cpp#L250-L258) as announced on [reddit](https://www.reddit.com/r/ryocurrency/comments/8nb8eq/direction_for_ryo/).
 
-- **Coin symbol**: **SUMO**
+- **Coin symbol**: **RYO**
 - **Coin Units**:
-  + 1 Sumoshi &nbsp;= 0.000000001 **SUMO** (10<sup>-9</sup> - _the smallest coin unit_)
-  + 1 Sumokun = 0.000001 **SUMO** (10<sup>-6</sup>)
-  + 1 Sumosan = 0.001 **SUMO** (10<sup>-3</sup>)
-- **Hash algorithm**: CryptoNight (Proof-Of-Work)
+  + 1 nanoRyo &nbsp;= 0.000000001 **RYO** (10<sup>-9</sup>-_the smallest coin unit_)
+  + 1 microRyo = 0.000001 **RYO** (10<sup>-6</sup>)
+  + 1 milliRyo = 0.001 **RYO** (10<sup>-3</sup>)
+- **Hash algorithm**: CryptoNight Heavy (Proof-Of-Work)
 - **Emission scheme**: Ryo's block reward changes _every 6-months_ as the following "Camel" distribution* (inspired by _real-world mining production_ like of crude oil, coal etc. that is often slow at first,
 accelerated in the next few years before declined and depleted). However, the emission path of Ryo is generally not far apart from what of Bitcoin (view charts below).
 
