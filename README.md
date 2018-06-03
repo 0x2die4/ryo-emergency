@@ -25,6 +25,9 @@ Sumokoin, therefore, is a new Monero without its legacy, a _truely fungible_ cry
 
 - **Total supply**: **88,888,888** coins in first 20 years, then **263,000** coins each year for inflation. 
 About 10% (~8.8 million) was premined to reserve for future development, i.e. **80 million coins available** for community mining.
+
+The pre-mined coins have been frozen/burned in commit [c3a3cb6](https://github.com/ryo-currency/ryo-emergency/commit/c3a3cb620488e88be7c52e017072261a3063b872)/ [blockchain_db/blockchain_db.cpp#L250-L258](https://github.com/ryo-currency/ryo-emergency/blob/c3a3cb620488e88be7c52e017072261a3063b872/src/blockchain_db/blockchain_db.cpp#L250-L258) as announced on [reddit](https://www.reddit.com/r/ryocurrency/comments/8nb8eq/direction_for_ryo/).
+
 - **Coin symbol**: **SUMO**
 - **Coin Units**:
   + 1 Sumoshi &nbsp;= 0.000000001 **SUMO** (10<sup>-9</sup> - _the smallest coin unit_)
